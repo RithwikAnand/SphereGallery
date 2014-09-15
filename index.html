@@ -1,0 +1,102 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Picture Gallery</title>
+    </head>
+    <body>
+        <!--<div id = "CGPlaceHolder" style = "position: absolute;"></div>-->
+        <div id = "SGPlaceHolder" style = "position: absolute;"></div>
+        <div id = "toolbarPanel" style = "position: absolute; bottom: 20px">
+            <button onclick="fnToggleAnimation()">Toggle Animation</button>
+            <button onclick="fnToggleOrientation()">Toggle Orientation</button>
+        </div>
+    </body>
+    <!--<script src = "js/CircleGallery.js"></script>-->
+    <script src = "js/SphereGallery.js"></script>
+    <link rel="stylesheet" href = "css/style.css">
+    <style>
+        body {
+            background : black;
+        }
+        .rotateHorizontally {
+            -webkit-animation: rotateHorizontal linear 50s infinite alternate;
+        }
+        .rotateVertically {
+            -webkit-animation: rotateVertical linear 50s infinite alternate;
+        }
+        
+        @-webkit-keyframes rotateHorizontal {
+            0% {-webkit-transform: rotateY(0deg);}
+            50% {-webkit-transform: rotateY(360deg);}
+            100% {-webkit-transform: rotateY(0deg);}
+        }
+        
+        @-webkit-keyframes rotateVertical {
+            0% {-webkit-transform: rotateX(0deg);}
+            50% {-webkit-transform: rotateX(360deg);}
+            100% {-webkit-transform: rotateX(0deg);}
+        }
+    </style>
+    <script>
+        /*var cG = new CircleGallery({
+            side : "700px"
+        });
+        
+        cG.placeAt('CGPlaceHolder');*/
+        
+        var height = window.innerHeight - 80,
+            width = window.innerWidth - 80;
+        var sG = new SphereGallery({
+                containerWidth : width + "px",
+                containerHeight : height + "px",
+                perspective : (width + 200) + "px",
+                orientation : "HORIZONTAL"
+            });
+            
+            sG.placeAt('SGPlaceHolder');
+        document.getElementById('toolbarPanel').style.cssText += "left: " + (width - 60) / 2 + "px";
+        
+        var addItemsToGallery = function (n) {
+            var noOfImgs = 6;
+            var itemElems = [];
+            
+            for (var i = 0; i < n; i++) {
+                var img1 = document.createElement('img');
+                var img2 = document.createElement('img');
+                
+                img1.setAttribute('src',"img/" + (i % noOfImgs) + ".jpg");
+                img1.style.cssText = "height : 100%; width : 100%";
+                
+                img2.setAttribute('src',"img/" + (i  % noOfImgs) + ".jpg");
+                img2.style.cssText = "height : 100%; width : 100%";
+                
+                itemElems.push({itemElement : img2});
+                //cG.addItem({itemElement : img1});
+            }
+            sG.addItem(itemElems);            
+        };
+        addItemsToGallery(6);  
+        
+        function fnToggleOrientation() {
+            var sphere = document.getElementsByClassName('SG-sphere')[0];
+            var orientation = sG._settings.orientation;
+            var rotateClass = orientation === 'HORIZONTAL' ? 'rotateHorizontally' : 'rotateVertically';
+            sG.setOrientation(orientation === "HORIZONTAL" ? "VERTICAL" : "HORIZONTAL");
+            if (sphere.classList.contains(rotateClass)) {
+                sphere.classList.remove(rotateClass);
+                sphere.classList.add(rotateClass === 'rotateHorizontally' ? 'rotateVertically' : 'rotateHorizontally');
+            }
+        };
+        
+        function fnToggleAnimation() {
+            var sphere = document.getElementsByClassName('SG-sphere')[0];
+            var orientation = sG._settings.orientation;
+            var rotateClass = orientation === 'HORIZONTAL' ? 'rotateHorizontally' : 'rotateVertically';
+            if (sphere.classList.contains(rotateClass)) {
+                sphere.classList.remove(rotateClass);
+            } else {
+                sphere.classList.add(rotateClass);
+            }
+        };
+    </script>
+</html>

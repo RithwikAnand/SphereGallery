@@ -1,0 +1,239 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+    <title> Sphere Testing Page</title>
+    </head>
+    <style>
+        body {
+            color: silver;
+            height: 100%;
+            width: 100%;
+        }
+        #container {
+            position: absolute;
+            height: 750px;
+            width: 1000px;
+            background: black;
+        }
+        #sphere {
+            position: relative;
+            margin: auto;
+            -webkit-transform-style: preserve-3d;
+            /*-webkit-animation: rotateAnim linear 50s infinite alternate; */
+        }
+        
+        @-webkit-keyframes rotateAnim {
+            0% {-webkit-transform: rotateY(0deg);}
+            50% {-webkit-transform: rotateY(360deg);}
+            100% {-webkit-transform: rotateY(0deg);}
+        }
+        .item {
+            position: absolute;
+            padding: 20px;
+            border: 1px solid;
+            border-radius: 12%;
+            -webkit-box-reflect: below 2px -webkit-gradient(linear, 0 0, 0 100%, from(transparent), color-stop(0.75, transparent), to(#FFF));
+        }
+        .img {
+            height: 100%;
+            width: 100%;
+            border-radius: 12%;
+        }
+    </style>
+    <body>
+        <input type="file" id="files" name="files[]" multiple style="float:left"/>
+        <div id="container">
+            <div id = "sphere">
+                
+            </div>
+        </div>
+    </body>
+    <script>
+        var sp = document.getElementById('sphere'),
+            cont = document.getElementById('container'),
+            multiplier = 100,
+            animRotateAngle = {x : 0, y : 0},
+            prevAnimRotateAngle = {x : 0, y : 0},
+            incrAngle = {x : 0, y : 0},
+            touchPoint = {x : 0, y : 0},
+            id = 0,
+            timeoutId = 0,
+            diff = 0,
+            startTime = undefined,
+            mouseAtRest = true,
+            imgSrcs = [],
+            isDragging = false;
+        
+        window.onload = function () {
+            document.getElementById('files').addEventListener('change', handleFileSelect, false);
+            cont.style.left = window.innerWidth / 2 - (cont.offsetWidth / 2)+ "px";
+            cont.style.top = window.innerHeight / 2 - (cont.offsetHeight / 2) + "px";
+        };
+        
+        var handleFileSelect = function(evt) {
+            var files = evt.target.files,
+                imgCount = 0,
+                imgLoadCount = 0,
+                bProcessFiles = false,
+                i,f;
+            
+            imgSrcs = [];
+            
+            for (i = 0; f = files[i]; i++) {
+                if (!f.type.match('image.*')) {
+                    continue;
+                }
+                imgCount++;
+                var reader = new FileReader();                
+                reader.onload = function (e) {
+                        imgSrcs.push(e.target.result);
+                        imgLoadCount++;
+                        if (bProcessFiles && imgLoadCount === imgCount) {
+                            insertImages();                            
+                        }
+                }; 
+                bProcessFiles = true;
+                reader.readAsDataURL(f);
+            }
+        };
+        
+        var insertImages = function () {    
+            var docFrag = document.createDocumentFragment(),
+                sphere = document.getElementById('sphere'),
+                container = document.getElementById('container'),
+                len = imgSrcs.length,
+                i,src;
+            
+            while(sp.children.length) {
+                [].forEach.call(sp.children, function(ele) {ele.parentElement.removeChild(ele);});
+            }
+            
+            var perspective = (800 + (100 * len));
+            container.style.cssText += "-webkit-perspective: " + perspective + "px;";
+            
+            var sphereWidth = calcSphereWidth(perspective, container.clientWidth);
+            sphere.style.cssText += "width: " + sphereWidth + "px;";
+            
+            var itemWidth = calcItemWidth(sphereWidth, len);
+            var minAspectRatio = 0;
+            for (i = 0; src = imgSrcs[i]; i++ ) {
+                var imgWrapper = document.createElement('div');
+                imgWrapper.setAttribute('class', 'item');
+                var img = document.createElement('img');
+                img.setAttribute('src',src);
+                img.className = "img";
+                imgWrapper.appendChild(img);
+                var aspectRatio = img.height / img.width;
+                minAspectRatio = minAspectRatio < aspectRatio ? aspectRatio : minAspectRatio;
+                docFrag.appendChild(imgWrapper);
+            }
+            var sphereHeight =sphereWidth * minAspectRatio;
+            var sphereVerticalMargin = (container.offsetHeight - sphereHeight) / 2;
+            sphere.style.cssText += "width: " + sphereWidth + "px; height: " + sphereHeight + "px; margin: " + sphereVerticalMargin + "px auto;";
+            
+            sphere.appendChild(docFrag);            
+            positionItems();
+        };
+        
+        var animLoop = function() {
+            var time = Date.now();
+            if(startTime === undefined) {
+                startTime = time;
+            }
+            var newDiff = ((time - startTime) / multiplier);
+            if ( newDiff * diff < 0 ) {
+                diff = newDiff;
+            } else {
+                diff = diff + (newDiff - diff) / 20;            
+            }
+            sp.style.cssText += "-webkit-transform: rotateY(" + diff % 360 + "deg);";
+            id = requestAnimationFrame(animLoop);
+        };
+        
+        var animRotateAngleLoop = function () {
+            var newRotateYAngle = (prevAnimRotateAngle.y + incrAngle.y);
+            var newRotateXAngle = (prevAnimRotateAngle.x + incrAngle.x);
+            
+            prevAnimRotateAngle.y = prevAnimRotateAngle.y + (newRotateYAngle - prevAnimRotateAngle.y) / 40;      
+            prevAnimRotateAngle.x = prevAnimRotateAngle.x + (newRotateXAngle - prevAnimRotateAngle.x) / 40; 
+            
+            prevAnimRotateAngle.x = 0;
+            //prevAnimRotateAngle.y = 90;
+            
+            if (newRotateYAngle !== prevAnimRotateAngle.y || newRotateXAngle !== prevAnimRotateAngle.x) {
+                sp.style.cssText += "-webkit-transform: rotateY(" + prevAnimRotateAngle.y + "deg) rotateX(" + prevAnimRotateAngle.x + "deg);";  
+            }          
+            id = requestAnimationFrame(animRotateAngleLoop);
+        };
+        
+        window.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            touchPoint = {x : e.pageX, y : e.pageY};
+            id = requestAnimationFrame(animRotateAngleLoop);
+        });
+        
+        window.addEventListener('mouseup', function() {
+            isDragging = false;
+        });
+                                   
+        window.addEventListener('mousemove', function (e) {
+            if (isDragging) {
+                e.preventDefault();
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(function () {
+                   touchPoint = {x : e.pageX, y : e.pageY};
+                   incrAngle = {x : 0, y : 0};
+                }, 200);
+                multiplier = getMultiplier(e.pageX);
+                incrAngle = {x : getAnimRotateXAngle(e.pageY - touchPoint.y), y : getAnimRotateYAngle(e.pageX - touchPoint.x)};
+            }
+        });
+        
+        function getMultiplier(val) {
+            var midValue = document.documentElement.offsetWidth;
+            if (val <= midValue) {
+                var rVal = val/midValue * 100;
+                return Math.max(5, rVal);
+            } else {
+                rVal = (val - (2 * midValue))/midValue * 100;
+                return Math.min(-5, rVal);
+            }
+        };
+        
+        var getAnimRotateYAngle = function (val) {
+            var endVal = document.documentElement.offsetWidth;
+            return val * 360 / endVal;
+        };
+        
+        var getAnimRotateXAngle = function (val) {
+            var endVal = document.documentElement.offsetHeight;
+            return -1 * val * 360 / endVal;
+        };
+        
+        function positionItems () {
+            var items = document.getElementsByClassName('item'),
+                container = document.getElementById('container'),
+                i,
+                len = items.length,
+                rotateAngle = (Math.PI / len) * 2,
+                itemWidth = items[0].offsetWidth,
+                translateLen = itemWidth / 2 * Math.abs(Math.tan((Math.PI - rotateAngle)/2));
+            for(i = 0; i < len ; i++) {
+                var item = items[i];
+                item.style.cssText += "-webkit-transform: rotateY(" +rotateAngle * i + "rad) translateZ(" + translateLen + "px);";
+            }
+        };
+        
+        function calcItemWidth(totalWidth, len) {
+            var angle = 2 * Math.PI / len;
+            var usedAngle = Math.PI/2 - angle;
+            var itemOffsetWidth = totalWidth / (1 + 2 *(Math.cos(1/2*usedAngle)-Math.cos((Math.floor(len /4)+1/2)*usedAngle))/(2*Math.sin(1/2*usedAngle)));
+            return itemOffsetWidth ;
+        };
+        
+        function calcSphereWidth(perspective, containerWidth) {
+            var sphereWidth = perspective * containerWidth / (perspective + containerWidth);
+            return sphereWidth;
+        };
+    </script>
+</html>

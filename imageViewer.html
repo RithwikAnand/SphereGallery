@@ -1,0 +1,66 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>IMAGE VIEWER</title>
+        <script src = "js/SphereGallery.js"></script>
+        <link rel="stylesheet" href = "css/style.css">
+    </head>
+    <body>
+        <input type="file" id="files" name="files[]" multiple style="float:left"/>
+        <div id="container" style="position: absolute; top : 40px">
+            <div id = "sphere"></div>
+        </div>
+    </body>
+    <script>
+            var handleFileSelect = function(evt) {
+                var files = evt.target.files,
+                    imgCount = 0,
+                    imgLoadCount = 0,
+                    bProcessFiles = false,
+                    imageSrcs = [],
+                    i,f;
+                
+                for (i = 0; f = files[i]; i++) {
+                    if (!f.type.match('image.*')) {
+                        continue;
+                    }
+                    imgCount++;
+                    var reader = new FileReader();                
+                    reader.onload = function (e) {
+                            imageSrcs.push(e.target.result);
+                            imgLoadCount++;
+                            if (bProcessFiles && imgLoadCount === imgCount) {
+                                addImagesToGallery(imageSrcs);                            
+                            }
+                    }; 
+                    bProcessFiles = true;
+                    reader.readAsDataURL(f);
+                }
+            };
+            
+            var addImagesToGallery = function(imgSrcs) {
+                var i, src, imgEles = [];
+                for (i = 0; src = imgSrcs[i]; i++) {
+                    var imgEle = document.createElement('img');
+                    imgEle.setAttribute('src',src);
+                    imgEle.style.cssText = "height : 100%; width : 100%";
+                    imgEles.push({itemElement : imgEle});
+                }
+                sG.addItem(imgEles);
+            };
+            var height = window.innerHeight - 80,
+                width = window.innerWidth - 80;
+            var sG = new SphereGallery({
+                containerWidth : width + "px",
+                containerHeight : height + "px",
+                perspective : (width + 200) + "px",
+                orientation : "HORIZONTAL"
+            });
+            
+            sG.placeAt('sphere');
+            
+            window.onload = function () {
+                document.getElementById('files').addEventListener('change', handleFileSelect, false);
+            }
+        </script>
+</html>
