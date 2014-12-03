@@ -47,7 +47,7 @@
         
         startAnimation : function () {
             var time = Date.now();
-            if (this._startTime === undefined) {
+            if (this._startTime === un) {
                 this._startTime = time;
             }
             var adder = (time - this._startTime) / 1000;
@@ -148,4 +148,4 @@
     
     window.CircleGallery = CircleGallery;
     
-}(undefined));
+}());
